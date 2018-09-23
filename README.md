@@ -56,7 +56,7 @@ Flowmacs exposes a few helpful functions:
 - `(flowmacs/find-refs)`: Print a list of references to the value or
   function under point.
 - `(flowmacs/suggest-types)`: Insert types suggested by flow into the
-  current buffer. **NOTE: Rewrites the buffer but does not save.**
+  current buffer.
 - `(flowmacs/jump-to-def)`: Jump to the definition of the value of
   function under point.
 
