@@ -1,5 +1,5 @@
 <div align="center">
-  <h2>flowmacs</h2>
+  <h1>flowmacs</h1>
   <i>Emacs minor mode to help you check your flow types</i>
 </div>
 
@@ -8,13 +8,16 @@
 Clone the package:
 
 ```
-$ git clone https://github.com/CodyReichert/flowmacs /some/path
+$ git clone https://github.com/CodyReichert/flowmacs /path/to/flowmacs
 ```
 
-Initialize with your mode of choice:
+Enable with your mode of choice:
 
 ```lisp
+(add-to-list 'load-path "/path/to/flowmacs/")
+
 (require 'flowmacs)
+
 (add-hook 'web-mode-hook 'flowmacs-mode)
 ```
 
