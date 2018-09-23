@@ -13,7 +13,7 @@ $ git clone https://github.com/CodyReichert/flowmacs /path/to/flowmacs
 
 Enable with your mode of choice:
 
-```lisp
+```elisp
 (add-to-list 'load-path "/path/to/flowmacs/")
 
 (require 'flowmacs)
