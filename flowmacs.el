@@ -40,7 +40,7 @@
 (defun flowmacs/flow-status ()
   "Call flow status and print results to compilation buffer."
   (interactive)
-  (compile (format "%s status" flowmacs/+flow+)))
+  (compile (format "%s status --from emacs" flowmacs/+flow+)))
 
 (defun flowmacs/type-at-pos ()
   "Show type signature for value under cursor."
