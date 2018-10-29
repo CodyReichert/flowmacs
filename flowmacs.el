@@ -6,6 +6,8 @@
 ;;;
 ;;; License: MIT
 
+(require 'xref)
+
 ;;; Code:
 (defgroup flowmacs nil
   "Minor mode to check flow types."
@@ -101,9 +103,11 @@
          (file (flowmacs/file-path-from-flow out)))
     (if (> (length file) 0)
         (progn
+          (xref-push-marker-stack)
           (find-file file)
           (goto-char (point-min))
-          (forward-line (1- (string-to-number line))))
+          (forward-line (1- (string-to-number line)))
+          (xref-pulse-momentarily))
       (message "[Flow Mode] No matching definitions found"))))
 
 ;;;
