@@ -27,6 +27,12 @@
   :type 'string
   :group 'flowmacs)
 
+(defun flowmacs/get-flow-buffer ()
+  "Kill existing *Flow Output* buffers and return the name."
+  (when (get-buffer flowmacs/+flow-buffer+)
+    (kill-buffer flowmacs/+flow-buffer+))
+  flowmacs/+flow-buffer+)
+
 ;;;
 ;;; Helpful things exposed by this package
 ;;;
@@ -39,23 +45,55 @@
   "Stop the flow server."
   (shell-command (format "%s stop" flowmacs/+flow+)))
 
+;; flow-status
+
+(defcustom flowmacs/+flow-status-args+
+  "--quiet --from emacs"
+  "Command line arguments passed to flow-status."
+  :type 'string
+  :group 'flowmacs)
+
 (defun flowmacs/flow-status ()
-  "Call flow status and print results to compilation buffer."
+  "Call flow status and print the results."
   (interactive)
-  (compile (format "%s status --from emacs" flowmacs/+flow+)))
+  (let* ((cmd (format "%s status %s"
+                      flowmacs/+flow+
+                      flowmacs/+flow-status-args+))
+         (out (shell-command-to-string cmd)))
+    (switch-to-buffer-other-window (flowmacs/get-flow-buffer))
+    (insert out)
+    (compilation-mode)))
+
+;; flow-type-at-pos
+
+(defcustom flowmacs/+type-at-pos-args+
+  "--quiet --from emacs"
+  "Command line arguments passed to flow-type-at-pos."
+  :type 'string
+  :group 'flowmacs)
 
 (defun flowmacs/type-at-pos ()
-  "Show type signature for value under cursor."
+  "Show type of value under cursor."
   (interactive)
   (let* ((file (buffer-file-name))
          (line (line-number-at-pos))
          (col (current-column))
          (buffer (current-buffer))
          (cmd (format
-               "%s type-at-pos --from emacs %s %d %d"
-               flowmacs/+flow+ file line (1+ col)))
+               "%s type-at-pos %s %s %d %d"
+               flowmacs/+flow+
+               flowmacs/+type-at-pos-args+
+               file
+               line
+               (1+ col)))
          (out (shell-command-to-string cmd)))
-    (message (flowmacs/parse-type-from-flow out))))
+    (switch-to-buffer-other-window (flowmacs/get-flow-buffer))
+    (insert out)
+    (compilation-mode)))
+    ;; Alternatively, we can use `display-message-or-buffer':
+    ;; (display-message-or-buffer out (flowmacs/get-flow-buffer))))
+
+;; flow-find-refs
 
 (defun flowmacs/find-refs ()
   "Find references to the current value at point."
@@ -65,10 +103,10 @@
          (col (current-column))
          (buffer (current-buffer))
          (cmd (format
-               "%s find-refs --from emacs %s %d %d; exit 0"
+               "%s find-refs --quiet --from emacs %s %d %d; exit 0"
                flowmacs/+flow+ file line (1+ col)))
          (out (shell-command-to-string cmd)))
-    (switch-to-buffer-other-window flowmacs/+flow-buffer+)
+    (switch-to-buffer-other-window (flowmacs/get-flow-buffer))
     (insert (flowmacs/clean-flow-output out))
     (compilation-mode)))
 
@@ -84,8 +122,8 @@
           (goto-char (point-min))
           (erase-buffer)
           (insert new)
-          (message "[Flow] Buffer updated with flow suggested types"))
-      (message (format "[Flow] Could not suggest types for %s" file)))))
+          (message "[flowmacs] Buffer updated with flow suggested types"))
+      (message (format "[flowmacs] Could not suggest types for %s" file)))))
 
 (defun flowmacs/jump-to-def ()
   "Jump to type definition of value under point."
@@ -108,7 +146,7 @@
           (goto-char (point-min))
           (forward-line (1- (string-to-number line)))
           (xref-pulse-momentarily))
-      (message "[Flow Mode] No matching definitions found"))))
+      (message "[flowmacs] No matching definitions found"))))
 
 ;;;
 ;;; Helper functions for working with Flow output
@@ -134,19 +172,6 @@
   "Parse the column number from Flow's output OUT."
   (if (and out (member "characters" (split-string out)))
       (car (split-string (cadr (member "characters" (split-string out))) "-"))
-    nil))
-
-(defun flowmacs/parse-type-from-flow (out)
-  "Parse `type-at-pos` response OUT from flow."
-  (if out
-      (progn
-        (let* ((m1 (replace-regexp-in-string
-                    "Please wait. Server is handling a request (starting up)"
-                    ""
-                    out))
-               (m2 (cdr (string-to-list m1)))
-               (p (cl-position 10 m2)))
-         (concat (cl-subseq m2 0 p))))
     nil))
 
 (defun flowmacs/clean-flow-output (out)
